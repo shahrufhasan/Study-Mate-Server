@@ -25,10 +25,20 @@ async function run() {
     // All api will go here
     const db = client.db("studyMatedb");
     const studentCollection = db.collection("students");
-
-    app.get("/students", async (req, res) => {
+    // get method
+    app.get("/partners", async (req, res) => {
       const result = await studentCollection.find().toArray();
       res.send(result);
+    });
+    // post method here
+    app.post("/partners", async (req, res) => {
+      const data = req.body;
+      console.log(data);
+      const result = await studentCollection.insertOne(data);
+      res.send({
+        success: true,
+        result,
+      });
     });
 
     await client.db("admin").command({ ping: 1 });
