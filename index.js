@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = 3000;
 
@@ -33,13 +33,26 @@ async function run() {
     // post method here
     app.post("/partners", async (req, res) => {
       const data = req.body;
-      console.log(data);
       const result = await studentCollection.insertOne(data);
       res.send({
         success: true,
         result,
       });
     });
+
+    // getting single data
+    app.get("/partners/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await studentCollection.findOne(query);
+      res.send({
+        success: true,
+        result,
+      });
+    });
+
+    // update data api
+    
 
     await client.db("admin").command({ ping: 1 });
     console.log(
