@@ -30,6 +30,7 @@ async function run() {
       const result = await studentCollection.find().toArray();
       res.send(result);
     });
+
     // post method here
     app.post("/partners", async (req, res) => {
       const data = req.body;
@@ -51,8 +52,47 @@ async function run() {
       });
     });
 
-    // update data api
-    
+    // update api
+
+    app.put("/partners/:id", async (req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updateData = { $set: data };
+      const result = await studentCollection.updateOne(query, updateData);
+      res.send({
+        success: true,
+        result,
+      });
+    });
+
+    // delete api
+    app.delete("/partners/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await studentCollection.deleteOne(query);
+
+      res.send({
+        success: true,
+        result,
+      });
+    });
+
+    // count update api
+
+    app.patch("/partners/:id/increment", async (req, res) => {
+      const id = req.params.id;
+
+      const query = { _id: new ObjectId(id) };
+      const update = { $inc: { partnerCont: 1 } };
+
+      const result = await studentCollection.updateOne(query, update);
+
+      res.send({
+        success: true,
+        result,
+      });
+    });
 
     await client.db("admin").command({ ping: 1 });
     console.log(
