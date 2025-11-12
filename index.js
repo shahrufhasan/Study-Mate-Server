@@ -25,10 +25,37 @@ async function run() {
     // All api will go here
     const db = client.db("studyMatedb");
     const studentCollection = db.collection("students");
+
     // get method
     app.get("/partners", async (req, res) => {
       const result = await studentCollection.find().toArray();
       res.send(result);
+    });
+
+    // my connection api
+    app.get("/my-conncetion", async (req, res) => {
+      const email = req.query.email;
+      let query = {};
+      if (email) {
+        query = { email };
+      }
+      const result = await studentCollection.find(query).toArray();
+      console.log(result);
+      res.send({
+        success: true,
+        result,
+      });
+    });
+
+    // top rated data
+    app.get("/latest-partners", async (req, res) => {
+      const result = await studentCollection
+        .find()
+        .sort({ rating: -1 })
+        .limit(3)
+        .toArray();
+      res.send(result);
+      console.log(result);
     });
 
     // post method here
