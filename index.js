@@ -1,8 +1,15 @@
 const express = require("express");
 const cors = require("cors");
+const admin = require("firebase-admin");
+const serviceAccount = require("./serviceKey.json");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = 3000;
+
+// admin fireBase
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 
 app.use(cors());
 app.use(express.json());
@@ -17,6 +24,18 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
+// middleware
+
+const verifyToken = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return res.status(401).send({ success: false, message: "Unauthorized" });
+  }
+  const token = authorization.split(" ")[1];
+
+  next();
+};
 
 async function run() {
   try {
@@ -55,7 +74,6 @@ async function run() {
         .limit(3)
         .toArray();
       res.send(result);
-      console.log(result);
     });
 
     // post method here
@@ -69,7 +87,7 @@ async function run() {
     });
 
     // getting single data
-    app.get("/partners/:id", async (req, res) => {
+    app.get("/partners/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await studentCollection.findOne(query);
