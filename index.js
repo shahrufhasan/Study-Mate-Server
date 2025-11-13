@@ -22,18 +22,16 @@ async function run() {
   try {
     await client.connect();
 
-    // All api will go here
     const db = client.db("studyMatedb");
     const studentCollection = db.collection("students");
+    const userConnectionCollection = db.collection("userConnections");
 
-    // get method
     app.get("/partners", async (req, res) => {
       const result = await studentCollection.find().toArray();
       res.send(result);
     });
 
-    // my connection api
-    app.get("/my-conncetion", async (req, res) => {
+    app.get("/my-connection", async (req, res) => {
       const email = req.query.email;
       let query = {};
       if (email) {
@@ -47,7 +45,6 @@ async function run() {
       });
     });
 
-    // top rated data
     app.get("/latest-partners", async (req, res) => {
       const result = await studentCollection
         .find()
@@ -57,7 +54,6 @@ async function run() {
       res.send(result);
     });
 
-    // post method here
     app.post("/partners", async (req, res) => {
       const data = req.body;
       const result = await studentCollection.insertOne(data);
@@ -67,7 +63,6 @@ async function run() {
       });
     });
 
-    // getting single data
     app.get("/partners/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -77,8 +72,6 @@ async function run() {
         result,
       });
     });
-
-    // update api
 
     app.put("/partners/:id", async (req, res) => {
       const id = req.params.id;
@@ -92,7 +85,6 @@ async function run() {
       });
     });
 
-    // delete api
     app.delete("/partners/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -103,8 +95,6 @@ async function run() {
         result,
       });
     });
-
-    // count update api
 
     app.patch("/partners/:id/increment", async (req, res) => {
       const id = req.params.id;
@@ -120,9 +110,53 @@ async function run() {
       });
     });
 
+    // Add a partner to user's connections
+    app.post("/myConnections", async (req, res) => {
+      const { userEmail, partnerId } = req.body;
+
+      const exists = await userConnectionCollection.findOne({
+        userEmail,
+        partnerId: new ObjectId(partnerId),
+      });
+
+      const result = await userConnectionCollection.insertOne({
+        userEmail,
+        partnerId: new ObjectId(partnerId),
+        createdAt: new Date(),
+      });
+
+      res.send({ success: true, result });
+    });
+
+    app.get("/myConnections", async (req, res) => {
+      const { userEmail } = req.query;
+
+      const connections = await userConnectionCollection
+        .find({ userEmail })
+        .toArray();
+      const partnerIds = connections.map((c) => new ObjectId(c.partnerId));
+      const partners = await studentCollection
+        .find({ _id: { $in: partnerIds } })
+        .toArray();
+
+      res.send(partners);
+    });
+
+    app.delete("/myConnections/:partnerId", async (req, res) => {
+      const { partnerId } = req.params;
+      const { userEmail } = req.query;
+
+      const result = await userConnectionCollection.deleteOne({
+        userEmail,
+        partnerId: new ObjectId(partnerId),
+      });
+
+      res.send({ success: true, result });
+    });
+
     await client.db("admin").command({ ping: 1 });
     console.log(
-      "Pinged your deployment. You successfully connected to MongoDBsss!"
+      "Pinged your deployment. You successfully connected to MongoDB!"
     );
   } finally {
     // await client.close();
