@@ -5,7 +5,15 @@ require("dotenv").config();
 const app = express();
 const port = 3000;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5174",
+      "https://dainty-heliotrope-2412ef.netlify.app",
+    ],
+  })
+);
+
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.cnv9fix.mongodb.net/?appName=Cluster0`;
@@ -20,7 +28,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
 
     const db = client.db("studyMatedb");
     const studentCollection = db.collection("students");
@@ -151,10 +159,20 @@ async function run() {
         partnerId: new ObjectId(partnerId),
       });
 
-      res.send({ success: true, result });
+      if (result.deletedCount === 0) {
+        return res
+          .status(404)
+          .send({ success: false, message: "Connection not found" });
+      }
+
+      res.send({
+        success: true,
+        message: "Connection deleted successfully",
+        result,
+      });
     });
 
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
